@@ -113,7 +113,7 @@ app.innerHTML=`${head()}<h2>${E(c)}</h2><p class="hint">${fa(cats[c].length)} ک
 <button class="b g" onclick="admin()">بازگشت به دسته‌ها</button>`;
 document.getElementById('nw').addEventListener('keydown',e=>{if(e.key==='Enter')addW(i)})}
 function addW(i){const c=Object.keys(cats)[i],ws=document.getElementById('nw').value.split(/[,،\n]+/).map(s=>s.trim()).filter(Boolean);
-ws.forEach(w=>{if(!cats[c].includes(w))cats[c].push(w)});save();editCat(i)}
+ws.forEach(w=>{used[c]=(used[c]||[]).filter(x=>x!==w);if(!cats[c].includes(w))cats[c].push(w)});save();editCat(i)}
 function delW(i,j){const c=Object.keys(cats)[i];cats[c].splice(j,1);save();editCat(i)}
 function restW(i,j){const c=Object.keys(cats)[i],w=(used[c]||[])[j];if(w===undefined)return;used[c].splice(j,1);if(!cats[c].includes(w))cats[c].push(w);save();editCat(i)}
 function restAll(i){const c=Object.keys(cats)[i];(used[c]||[]).forEach(w=>{if(!cats[c].includes(w))cats[c].push(w)});used[c]=[];save();editCat(i)}

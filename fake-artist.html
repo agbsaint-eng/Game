@@ -79,6 +79,7 @@ const maxF=()=>Math.max(1,Math.min(3,Math.floor((S.players-1)/2)));
 const app=document.getElementById('app');
 const head=()=>`<div class="c hd"><img class="lg" src="${LOGO}" alt="لوگو"></div>`;
 const rnd=n=>{try{const m=Math.floor(4294967296/n)*n,b=new Uint32Array(1);do{crypto.getRandomValues(b)}while(b[0]>=m);return b[0]%n}catch(e){return Math.floor(Math.random()*n)}};
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]}return a};
 const corner=()=>`<button class="g gear" onclick="admin()" aria-label="مدیریت">⚙️</button><button class="g gear help" onclick="guide()" aria-label="راهنما">?</button>`;
 function chg(d){S.players=Math.min(12,Math.max(3,S.players+d));S.fakes=Math.min(S.fakes,maxF());setup()}
 function chgF(d){S.fakes=Math.min(maxF(),Math.max(1,S.fakes+d));setup()}
@@ -101,7 +102,7 @@ if(!pool.length){alert('کلمه‌ای باقی نمانده است. از ⚙�
 const [pc,pw]=pool[rnd(pool.length)];S.cat=pc;S.word=pw;
 cats[pc]=cats[pc].filter(x=>x!==pw);(used[pc]=used[pc]||[]).push(pw);save();
 const n=S.rf?1+rnd(maxF()):Math.min(S.fakes,maxF()),all=[...Array(S.players).keys()],prev=S.lastFk;
-S.fk=shuffle(all.filter(x=>!prev.includes(x))).concat(shuffle(all.filter(x=>prev.includes(x)))).slice(0,n);
+S.fk=shuffle(all).slice(0,n);
 S.lastFk=[...S.fk];S.start=rnd(S.players);S.i=0;pass()}
 const dots=()=>`<div class="dots">${[...Array(S.players)].map((_,i)=>`<i class="${i<S.i?'d':''}"></i>`).join('')}</div>`;
 function pass(){app.innerHTML=`${head()}<div class="ct" style="padding-top:10px">${dots()}<p class="hint">گوشی را به</p><div class="big">بازیکن ${fa(S.i+1)}</div><p class="hint">بدهید و مطمئن شوید بقیه نگاه نمی‌کنند.</p><button class="b" onclick="reveal()">نمایش کارت من</button></div>`}
@@ -154,7 +155,7 @@ app.innerHTML=`${head()}<h2>${E(c)}</h2><p class="hint">${fa(cats[c].length)} ک
 <button class="b g" onclick="admin()">بازگشت به دسته‌ها</button>`;
 document.getElementById('nw').addEventListener('keydown',e=>{if(e.key==='Enter')addW(i)})}
 function addW(i){const c=Object.keys(cats)[i],ws=document.getElementById('nw').value.split(/[,،\n]+/).map(s=>s.trim()).filter(Boolean);
-ws.forEach(w=>{if(!cats[c].includes(w))cats[c].push(w)});save();editCat(i)}
+ws.forEach(w=>{used[c]=(used[c]||[]).filter(x=>x!==w);if(!cats[c].includes(w))cats[c].push(w)});save();editCat(i)}
 function restW(i,j){const c=Object.keys(cats)[i],w=(used[c]||[])[j];if(w===undefined)return;used[c].splice(j,1);if(!cats[c].includes(w))cats[c].push(w);save();editCat(i)}
 function restAll(i){const c=Object.keys(cats)[i];(used[c]||[]).forEach(w=>{if(!cats[c].includes(w))cats[c].push(w)});used[c]=[];save();editCat(i)}
 function delW(i,j){const c=Object.keys(cats)[i];cats[c].splice(j,1);save();editCat(i)}

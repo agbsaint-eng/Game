@@ -72,7 +72,9 @@ const DEF=[["پیتزا",["پنیر","ایتالیایی","فر","خمیر","ف�
 const KEY='mamnooe_v1';
 let cards;try{const d=JSON.parse(localStorage.getItem(KEY));cards=Array.isArray(d)?d:null}catch(e){cards=null}
 if(!cards)cards=JSON.parse(JSON.stringify(DEF));
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(cards))}catch(e){}};
+const UK='mamnooe_used_v1';
+let used;try{const u=JSON.parse(localStorage.getItem(UK));used=Array.isArray(u)?u:[]}catch(e){used=[]}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(cards));localStorage.setItem(UK,JSON.stringify(used))}catch(e){}};
 const S={rounds:3,secs:60,sc:[0,0],turn:0,ts:0,deck:[],cur:null,left:0,tm:null};
 const app=document.getElementById('app');
 const head=()=>`<div class="c hd"><img class="lg" src="${LOGO}" alt="لوگو"></div>`;
@@ -86,15 +88,15 @@ app.innerHTML=`<button class="g gear" onclick="admin()" aria-label="مدیریت
 <div class="c">${stepper('rounds',1,10,1,'تعداد دورها')}${stepper('secs',30,120,15,'زمان هر نوبت (ثانیه)')}</div>
 <button class="b" onclick="begin()">شروع بازی</button>
 <p class="hint">کلمه را توضیح بده، بدون گفتن کلمه و پنج کلمهٔ ممنوع. هم‌تیمی‌ها حدس می‌زنند.</p>`}
-function begin(){if(!cards.length){alert('کارتی وجود ندارد. از ⚙️ کارت جدید اضافه کنید.');return}
-S.sc=[0,0];S.turn=0;S.deck=[];ready()}
+function begin(){if(!cards.length){alert('کارتی باقی نمانده است. از ⚙️ کارت‌های استفاده‌شده را برگردانید یا کارت جدید اضافه کنید.');return}
+S.sc=[0,0];S.turn=0;ready()}
 const board=()=>`<div class="sc">${[0,1].map(i=>`<div class="c ${S.turn%2==i?'on':''}"><small>${TN[i]}</small><b>${fa(S.sc[i])}</b></div>`).join('')}</div>`;
 function ready(){
 if(S.turn>=S.rounds*2)return fin();
 const t=S.turn%2;
 app.innerHTML=`${head()}${board()}<div class="ct"><p class="hint">دور ${fa(Math.floor(S.turn/2)+1)} از ${fa(S.rounds)}</p><div class="big">نوبت ${TN[t]}</div><p class="hint">یک نفر توضیح می‌دهد؛ حریف‌ها مراقب کلمات ممنوع باشند.</p><button class="b" onclick="go()">شروع نوبت</button></div>`}
-function draw(){if(!S.deck.length)S.deck=shuffle(cards);S.cur=S.deck.pop()}
-function go(){S.ts=0;S.left=S.secs;draw();card();
+function draw(){if(!cards.length)return false;S.cur=cards.splice(rnd(cards.length),1)[0];used.push(S.cur);save();return true}
+function go(){S.ts=0;S.left=S.secs;if(!draw()){alert('کارتی باقی نمانده است. از ⚙️ کارت‌های استفاده‌شده را برگردانید یا کارت جدید اضافه کنید.');setup();return}card();
 S.tm=setInterval(()=>{S.left--;const t=document.getElementById('t');if(!t)return clearInterval(S.tm);t.textContent=fa(Math.max(0,S.left));t.classList.toggle('low',S.left<=10);if(S.left<=0){clearInterval(S.tm);try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}endTurn()}},1000)}
 function card(){
 app.innerHTML=`${head()}<div class="t" id="t">${fa(S.left)}</div>
@@ -103,7 +105,7 @@ app.innerHTML=`${head()}<div class="t" id="t">${fa(S.left)}</div>
 <button class="b g" onclick="ans(0)">⏭ رد کردن</button>
 <button class="b g" onclick="ans(-1)">🚫 کلمه ممنوعه گفته شد (−۱)</button>`;
 document.getElementById('t').classList.toggle('low',S.left<=10)}
-function ans(d){S.sc[S.turn%2]+=d;S.ts+=d;draw();card()}
+function ans(d){S.sc[S.turn%2]+=d;S.ts+=d;if(!draw()){alert('کارت‌ها تمام شد. از ⚙️ کارت‌های استفاده‌شده را برگردانید یا کارت جدید اضافه کنید.');endTurn();return}card()}
 function endTurn(){clearInterval(S.tm);
 app.innerHTML=`${head()}<div class="ct"><h2>⏰ زمان تمام شد</h2><p class="hint">امتیاز این نوبت برای ${TN[S.turn%2]}</p><div class="big">${fa(S.ts)}</div>${board()}<button class="b" onclick="S.turn++;ready()">ادامه</button></div>`}
 function fin(){const [a,b]=S.sc;
@@ -114,13 +116,14 @@ app.innerHTML=`${head()}<h2>راهنمای بازی</h2>
 <div class="c"><b>هدف</b><p class="hint" style="text-align:right">تیمت را وادار کن کلمهٔ روی کارت را حدس بزند، بدون اینکه خود کلمه یا کلمات ممنوع را بگویی.</p></div>
 <div class="c"><b>طرز بازی</b><p class="hint" style="text-align:right">۱) بازیکن‌ها به دو تیم تقسیم می‌شوند و تیم‌ها نوبتی بازی می‌کنند.<br>۲) در هر نوبت یک نفر گوشی را می‌گیرد و کلمهٔ بالای کارت را برای هم‌تیمی‌هایش توضیح می‌دهد.<br>۳) گفتن خود کلمه، کلمات ممنوع، ترجمه یا اشاره با دست و حرکت مجاز نیست.<br>۴) اعضای تیم حریف مراقب‌اند؛ اگر کلمهٔ ممنوع گفته شد، دکمهٔ 🚫 را بزنند.</p></div>
 <div class="c"><b>امتیاز</b><p class="hint" style="text-align:right">حدس درست ‎+۱ ، رد کردن کارت ۰ ، گفتن کلمهٔ ممنوع ‎−۱. در پایان همهٔ دورها تیمی که امتیاز بیشتری دارد برنده است.</p></div>
-<div class="c"><b>نکته</b><p class="hint" style="text-align:right">از ⚙️ در صفحهٔ اول می‌توانید کارت‌ها را ویرایش کنید یا کارت جدید بسازید.</p></div>
+<div class="c"><b>نکته</b><p class="hint" style="text-align:right">از ⚙️ در صفحهٔ اول می‌توانید کارت‌ها را ویرایش کنید یا کارت جدید بسازید. هر کارت بعد از آمدن به بخش «کارت‌های استفاده‌شده» می‌رود و دوباره نمی‌آید؛ از ⚙️ می‌توانید برگردانیدش.</p></div>
 <button class="b" onclick="setup()">بازگشت</button>`}
 
 /* ---------- پنل مدیریت ---------- */
 function admin(){clearInterval(S.tm);
-app.innerHTML=`${head()}<h2>پنل مدیریت</h2><p class="hint">روی یک کارت بزنید تا ویرایش شود. (${fa(cards.length)} کارت)</p>
+app.innerHTML=`${head()}<h2>پنل مدیریت</h2><p class="hint">روی یک کارت بزنید تا ویرایش شود. (${fa(cards.length)} کارت، ${fa(used.length)} استفاده‌شده)</p>
 <div class="c">${cards.length?cards.map((c,i)=>`<div class="li"><span onclick="form(${i})"><b>${E(c[0])}</b> <small>(${E(c[1].join('، '))})</small></span><button class="g" onclick="delCard(${i})">حذف</button></div>`).join(''):'<p class="hint">کارتی وجود ندارد.</p>'}</div>
+<div class="c"><b>کارت‌های استفاده‌شده</b> <small style="color:var(--mu)">(${fa(used.length)})</small>${used.length?`<div style="margin-top:6px">${used.map((c,j)=>`<span class="ch x">${E(c[0])}<b onclick="restC(${j})" aria-label="بازگردانی">↩</b></span>`).join('')}</div><button class="b g" onclick="restAll()">بازگرداندن همه به کارت‌ها</button>`:'<p class="hint">هنوز کارتی استفاده نشده.</p>'}</div>
 <button class="b" onclick="form(-1)">+ کارت جدید</button>
 <button class="b g" onclick="resetAll()">بازگشت به کارت‌های پیش‌فرض</button>
 <button class="b g" onclick="setup()">بازگشت به بازی</button>`}
@@ -133,9 +136,11 @@ app.innerHTML=`${head()}<h2>${i>=0?'ویرایش کارت':'کارت جدید'}<
 document.getElementById('cw').focus()}
 function saveCard(i){const w=document.getElementById('cw').value.trim(),f=[...new Set(document.getElementById('cf').value.split(/[,،\n]+/).map(x=>x.trim()).filter(Boolean))];
 if(!w||!f.length){alert('کلمه و حداقل یک کلمهٔ ممنوع را وارد کنید');return}
-if(i>=0)cards[i]=[w,f];else cards.push([w,f]);save();admin()}
-function delCard(i){if(!confirm('کارت «'+cards[i][0]+'» حذف شود؟'))return;cards.splice(i,1);S.deck=[];save();admin()}
-function resetAll(){if(!confirm('همهٔ تغییرات پاک شود و کارت‌های پیش‌فرض برگردد؟'))return;cards=JSON.parse(JSON.stringify(DEF));S.deck=[];save();admin()}
+used=used.filter(c=>c[0]!==w);if(i>=0)cards[i]=[w,f];else cards.push([w,f]);save();admin()}
+function delCard(i){if(!confirm('کارت «'+cards[i][0]+'» حذف شود؟'))return;cards.splice(i,1);save();admin()}
+function restC(j){const c=used[j];if(!c)return;used.splice(j,1);if(!cards.some(x=>x[0]===c[0]))cards.push(c);save();admin()}
+function restAll(){used.forEach(c=>{if(!cards.some(x=>x[0]===c[0]))cards.push(c)});used=[];save();admin()}
+function resetAll(){if(!confirm('همهٔ تغییرات پاک شود و کارت‌های پیش‌فرض برگردد؟'))return;cards=JSON.parse(JSON.stringify(DEF));used=[];save();admin()}
 setup();
 </script>
 <script>if('serviceWorker' in navigator)addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});</script>

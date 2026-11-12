@@ -110,9 +110,7 @@ let pl=pool.filter(p=>p[0]!==S.lastCat);if(!pl.length)pl=pool;
 const [pc,pw]=pl[rnd(pl.length)];S.lastCat=pc;
 S.word=pw;
 cats[pc]=cats[pc].filter(x=>x!==pw);(used[pc]=used[pc]||[]).push(pw);save();
-const all=[...Array(S.players).keys()],prev=S.lastSpies||[];
-S.spyIdx=shuffle(all.filter(x=>!prev.includes(x))).concat(shuffle(all.filter(x=>prev.includes(x)))).slice(0,S.spies);
-S.lastSpies=[...S.spyIdx];
+S.spyIdx=shuffle([...Array(S.players).keys()]).slice(0,S.spies);
 S.i=0;pass()}
 
 const dots=()=>`<div class="dots">${[...Array(S.players)].map((_,i)=>`<i class="${i<S.i?'d':''}"></i>`).join('')}</div>`;

@@ -81,13 +81,16 @@ const DEF={
 let cats;
 try{const d=JSON.parse(localStorage.getItem(KEY));cats=d&&typeof d==='object'&&!Array.isArray(d)?d:null}catch(e){cats=null}
 if(!cats)cats=JSON.parse(JSON.stringify(DEF));
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(cats))}catch(e){}};
-const S={players:5,mins:5,dmins:2,sel:new Set(Object.keys(cats)),word:'',cat:'',master:0,insider:1,i:0,left:0,tm:null,last:''};
+const UK='insider_used_v1';
+let used={};try{const u=JSON.parse(localStorage.getItem(UK));if(u&&typeof u==='object'&&!Array.isArray(u))used=u}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(cats));localStorage.setItem(UK,JSON.stringify(used))}catch(e){}};
+const S={rw:false,players:5,mins:5,dmins:2,sel:new Set(Object.keys(cats)),word:'',cat:'',master:0,insider:1,i:0,left:0,tm:null,last:''};
 const app=document.getElementById('app');
 const head=()=>`<div class="c hd"><img class="lg" src="${LOGO}" alt="لوگو"></div>`;
 const rnd=n=>{try{const m=Math.floor(4294967296/n)*n,b=new Uint32Array(1);do{crypto.getRandomValues(b)}while(b[0]>=m);return b[0]%n}catch(e){return Math.floor(Math.random()*n)}};
 function stepper(k,min,max,lbl){return `<div class="row"><b>${lbl}</b><div class="st"><button onclick="chg('${k}',-1,${min},${max})">−</button><span>${fa(S[k])}</span><button onclick="chg('${k}',1,${min},${max})">+</button></div></div>`}
 function chg(k,d,min,max){S[k]=Math.min(max,Math.max(min,S[k]+d));setup()}
+function tgl(k){S[k]=!S[k];setup()}
 function tog(i){const c=Object.keys(cats)[i];S.sel.has(c)?S.sel.delete(c):S.sel.add(c);setup()}
 
 function setup(){stopMel();
@@ -98,15 +101,15 @@ if(!S.sel.size&&names.length)S.sel.add(names[0]);
 app.innerHTML=`<button class="g gear" onclick="admin()" aria-label="مدیریت">⚙️</button><button class="g gear rt" onclick="help()" aria-label="راهنما">❓</button>${head()}
 <h2>اینسایدر</h2><p class="hint">بازی گروهی با یک گوشی</p>
 <div class="c">${stepper('players',3,20,'تعداد بازیکنان')}${stepper('mins',1,15,'زمان حدس کلمه (دقیقه)')}${stepper('dmins',1,5,'زمان پیدا کردن اینسایدر (دقیقه)')}</div>
-<div class="c"><b>دسته‌بندی کلمات</b><div style="margin-top:6px">${names.map((c,i)=>`<button class="ch ${S.sel.has(c)?'y':''}" onclick="tog(${i})">${E(c)} <small>(${fa(cats[c].length)})</small></button>`).join('')||'<p class="hint">دسته‌ای وجود ندارد. از ⚙️ بسازید.</p>'}</div></div>
+<div class="c"><b>دسته‌بندی کلمات</b><div style="margin-top:6px"><button class="ch ${S.rw?'y':''}" onclick="tgl('rw')">🎲 تصادفی از همه دسته‌ها</button>${names.map((c,i)=>`<button class="ch ${S.sel.has(c)?'y':''}" onclick="tog(${i})">${E(c)} <small>(${fa(cats[c].length)})</small></button>`).join('')||'<p class="hint">دسته‌ای وجود ندارد. از ⚙️ بسازید.</p>'}</div></div>
 <button class="b" onclick="start()">شروع بازی</button>
 <p class="hint">یک نفر «کلمه‌دان» است و فقط با بله/خیر جواب می‌دهد. یک نفر «اینسایدر» است و کلمه را می‌داند، اما مخفیانه جمع را به جواب می‌رساند.</p>`}
 
 function start(){unlock();stopMel();
-const pool=[...S.sel].flatMap(c=>(cats[c]||[]).map(w=>[c,w]));
-if(!pool.length){alert('کلمه‌ای وجود ندارد. از ⚙️ کلمه اضافه کنید.');return}
+const pool=(S.rw?Object.keys(cats):[...S.sel]).flatMap(c=>(cats[c]||[]).map(w=>[c,w]));
+if(!pool.length){alert('کلمه‌ای باقی نمانده است. از ⚙️ کلمات استفاده‌شده را برگردانید یا کلمه جدید اضافه کنید.');return}
 let pl=pool.filter(p=>p[1]!==S.last);if(!pl.length)pl=pool;
-const [c,w]=pl[rnd(pl.length)];S.cat=c;S.word=w;S.last=w;
+const [c,w]=pl[rnd(pl.length)];S.cat=c;S.word=w;S.last=w;cats[c]=cats[c].filter(x=>x!==w);(used[c]=used[c]||[]).push(w);save();
 S.master=rnd(S.players);
 do{S.insider=rnd(S.players)}while(S.insider===S.master);
 S.i=0;pass()}
@@ -177,29 +180,32 @@ app.innerHTML=`<button class="g gear rt" onclick="setup()" aria-label="بازگ�
 <div class="c"><h3>برد و باخت</h3><ul><li>اگر زمان حدس تمام شود و کلمه پیدا نشود، <b>همه می‌بازند</b> (اینسایدر هم).</li><li>اگر کلمه پیدا شود و گروه اینسایدر را درست رأی بدهد، <b>گروه می‌برد</b>.</li><li>اگر کلمه پیدا شود ولی گروه اشتباه رأی بدهد، <b>اینسایدر می‌برد</b>.</li><li>کلمه‌دان در برد گروه شریک است و اگر کلمه پیدا نشود می‌بازد.</li></ul></div>
 <div class="c"><h3>مثال یک دور</h3><p>۵ بازیکن هستند. کلمه «فرودگاه» از دستهٔ «مکان‌ها» است. بازیکن ۲ کلمه‌دان و بازیکن ۴ اینسایدر شده است.</p><div class="ex">بازیکن ۲: «من کلمه‌دانم. فقط بله یا خیر جواب می‌دهم.»</div><div class="ex">بازیکن ۱: «آیا آن جا سرپوشیده است؟» ← کلمه‌دان: «بله.»</div><div class="ex">بازیکن ۳: «آیا مردم آن جا زندگی می‌کنند؟» ← «خیر.»</div><div class="ex">بازیکن ۴ (اینسایدر): «آیا آن جا برای سفر استفاده می‌شود؟» ← «بله.» (سؤال خوبی است، گروه را نزدیک می‌کند ولی خیلی مشکوک نیست.)</div><div class="ex">بازیکن ۵: «آیا هواپیما آن جا هست؟» ← «بله.»</div><div class="ex">بازیکن ۱: «فرودگاه؟» ← «بله، درست است!»</div><p>حالا «کلمه حدس زده شد» را می‌زنند. در بحث، بازیکن ۵ می‌گوید: «سؤال بازیکن ۴ خیلی دقیق بود.» بازیکن ۴ دفاع می‌کند. همه رأی می‌دهند و اگر اکثریت بازیکن ۴ را بگویند، گروه برده است.</p></div>
 <div class="c"><h3>نکته‌ها و استراتژی</h3><ul><li><b>اینسایدر:</b> سؤال‌هایت را طبیعی و نه خیلی دقیق بپرس. اگر بیش از حد هدایت کنی لو می‌روی و اگر کم هدایت کنی وقت تمام می‌شود.</li><li><b>عادی‌ها:</b> سؤال‌ها را از کلی به جزئی بپرسید: «جاندار است؟»، «بیرون خانه است؟» و به سؤال‌های مشکوکِ بسیار دقیق دقت کنید.</li><li><b>کلمه‌دان:</b> فقط بله/خیر بگو. اگر سؤال مبهم است، «نمی‌دانم» بگو.</li><li>حدس زدن کلمه با گفتن مستقیم آن است، نه با سؤال.</li><li>مدت حدس را برای جمع‌های بزرگ‌تر بیشتر کنید.</li></ul></div>
-<div class="c"><h3>مدیریت کلمه‌ها</h3><p>با دکمهٔ ⚙️ سمت چپ بالا می‌توانید دسته و کلمهٔ جدید بسازید یا کلمه‌ها را حذف کنید. دسته‌های پررنگ زردرنگ در صفحهٔ اصلی همان‌هایی هستند که در بازی استفاده می‌شوند.</p></div>
+<div class="c"><h3>مدیریت کلمه‌ها</h3><p>با دکمهٔ ⚙️ سمت چپ بالا می‌توانید دسته و کلمهٔ جدید بسازید یا کلمه‌ها را حذف کنید. هر کلمه بعد از استفاده به بخش «کلمات استفاده‌شده» می‌رود و دوباره نمی‌آید؛ از همان‌جا می‌توانید برش گردانید. نقش‌ها (کلمه‌دان و اینسایدر) هر دور کاملاً تصادفی پخش می‌شوند. دسته‌های پررنگ زردرنگ در صفحهٔ اصلی همان‌هایی هستند که در بازی استفاده می‌شوند.</p></div>
 <button class="b" onclick="setup()">بازگشت به بازی</button>`}
 function admin(){
 clearInterval(S.tm);
 const names=Object.keys(cats);
 app.innerHTML=`${head()}<h2>پنل مدیریت</h2><p class="hint">روی نام دسته بزنید تا کلماتش را ویرایش کنید.</p>
-<div class="c">${names.length?names.map((c,i)=>`<div class="li"><span onclick="editCat(${i})"><b>${E(c)}</b> <small>(${fa(cats[c].length)} کلمه)</small></span><button class="g" onclick="delCat(${i})">حذف</button></div>`).join(''):'<p class="hint">دسته‌ای وجود ندارد.</p>'}</div>
+<div class="c">${names.length?names.map((c,i)=>`<div class="li"><span onclick="editCat(${i})"><b>${E(c)}</b> <small>(${fa(cats[c].length)} کلمه، ${fa((used[c]||[]).length)} استفاده‌شده)</small></span><button class="g" onclick="delCat(${i})">حذف</button></div>`).join(''):'<p class="hint">دسته‌ای وجود ندارد.</p>'}</div>
 <div class="c"><b>دسته جدید</b><input id="nc" placeholder="نام دسته، مثلاً: ورزش‌ها" maxlength="40"><button class="b" onclick="addCat()">افزودن دسته</button></div>
 <button class="b g" onclick="resetAll()">بازگشت به دسته‌های پیش‌فرض</button>
 <button class="b" onclick="setup()">بازگشت به بازی</button>`}
 function addCat(){const el=document.getElementById('nc'),n=el.value.trim();if(!n)return;if(cats[n]){alert('این دسته از قبل وجود دارد');return}cats[n]=[];S.sel.add(n);save();editCat(Object.keys(cats).indexOf(n))}
-function delCat(i){const c=Object.keys(cats)[i];if(!confirm('دسته «'+c+'» حذف شود؟'))return;delete cats[c];S.sel.delete(c);save();admin()}
-function resetAll(){if(!confirm('دسته‌های پیش‌فرض برگردد؟'))return;cats=JSON.parse(JSON.stringify(DEF));S.sel=new Set(Object.keys(cats));save();admin()}
+function delCat(i){const c=Object.keys(cats)[i];if(!confirm('دسته «'+c+'» با همه کلماتش حذف شود؟'))return;delete cats[c];delete used[c];S.sel.delete(c);save();admin()}
+function resetAll(){if(!confirm('دسته‌های پیش‌فرض برگردد؟'))return;cats=JSON.parse(JSON.stringify(DEF));used={};S.sel=new Set(Object.keys(cats));save();admin()}
 function editCat(i){
 const c=Object.keys(cats)[i];if(c===undefined)return admin();
 app.innerHTML=`${head()}<h2>${E(c)}</h2><p class="hint">${fa(cats[c].length)} کلمه</p>
 <div class="c"><b>افزودن کلمه</b><input id="nw" placeholder="یک یا چند کلمه (با ویرگول یا خط جدید جدا کنید)"><button class="b" onclick="addW(${i})">افزودن</button></div>
 <div class="c">${cats[c].length?cats[c].map((w,j)=>`<span class="ch x">${E(w)}<b onclick="delW(${i},${j})" aria-label="حذف">×</b></span>`).join(''):'<p class="hint">این دسته خالی است.</p>'}</div>
+<div class="c"><b>کلمات استفاده‌شده</b> <small style="color:var(--mu)">(${fa((used[c]||[]).length)})</small>${(used[c]||[]).length?`<div style="margin-top:6px">${used[c].map((w,j)=>`<span class="ch x">${E(w)}<b onclick="restW(${i},${j})" aria-label="بازگردانی">↩</b></span>`).join('')}</div><button class="b g" onclick="restAll(${i})">بازگرداندن همه به دسته</button>`:'<p class="hint">هنوز کلمه‌ای از این دسته استفاده نشده.</p>'}</div>
 <button class="b g" onclick="admin()">بازگشت به دسته‌ها</button>`;
 document.getElementById('nw').addEventListener('keydown',e=>{if(e.key==='Enter')addW(i)})}
 function addW(i){const c=Object.keys(cats)[i],el=document.getElementById('nw');
-el.value.split(/[,،\n]+/).map(s=>s.trim()).filter(Boolean).forEach(w=>{if(!cats[c].includes(w))cats[c].push(w)});save();editCat(i)}
+el.value.split(/[,،\n]+/).map(s=>s.trim()).filter(Boolean).forEach(w=>{used[c]=(used[c]||[]).filter(x=>x!==w);if(!cats[c].includes(w))cats[c].push(w)});save();editCat(i)}
 function delW(i,j){const c=Object.keys(cats)[i];cats[c].splice(j,1);save();editCat(i)}
+function restW(i,j){const c=Object.keys(cats)[i],w=(used[c]||[])[j];if(w===undefined)return;used[c].splice(j,1);if(!cats[c].includes(w))cats[c].push(w);save();editCat(i)}
+function restAll(i){const c=Object.keys(cats)[i];(used[c]||[]).forEach(w=>{if(!cats[c].includes(w))cats[c].push(w)});used[c]=[];save();editCat(i)}
 setup();
 </script>
 <script>if('serviceWorker' in navigator)addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});</script>
