@@ -1,0 +1,33 @@
+{
+ "id": "who-am-i",
+ "name": "من کیستم؟ | رودی",
+ "short_name": "من کیستم؟",
+ "lang": "fa",
+ "dir": "rtl",
+ "start_url": "./who-am-i.html",
+ "scope": "./",
+ "display": "standalone",
+ "orientation": "portrait",
+ "theme_color": "#ef492c",
+ "background_color": "#fff7f4",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ]
+}
