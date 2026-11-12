@@ -2,7 +2,7 @@
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#ef492c">
 <title>هنرمند قلابی</title>
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
@@ -51,7 +51,11 @@ h2{margin:6px 0;font-size:22px;text-align:center}
 footer{text-align:center;opacity:.6;font-size:13px;margin:20px 0 28px}
 
 .help{left:auto;right:14px;font-weight:700}
-.secret .ct2{color:var(--mu);font-size:14px}</style>
+.secret .ct2{color:var(--mu);font-size:14px}*{touch-action:pan-x pan-y;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input,textarea{font-size:16px;-webkit-user-select:text;user-select:text}
+</style>
 <link rel="manifest" href="fake-artist.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -162,5 +166,11 @@ function delW(i,j){const c=Object.keys(cats)[i];cats[c].splice(j,1);save();editC
 setup();
 </script>
 <script>if('serviceWorker' in navigator)addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});</script>
+<script>(function(){var d=document,o=function(e){e.preventDefault()};
+['gesturestart','gesturechange','gestureend'].forEach(function(t){d.addEventListener(t,o,{passive:false})});
+d.addEventListener('touchmove',function(e){if(e.touches.length>1||(e.scale&&e.scale!==1))e.preventDefault()},{passive:false});
+d.addEventListener('dblclick',o,{passive:false});
+d.addEventListener('wheel',function(e){if(e.ctrlKey)e.preventDefault()},{passive:false});
+d.addEventListener('keydown',function(e){if((e.ctrlKey||e.metaKey)&&['+','-','=','0'].indexOf(e.key)>-1)e.preventDefault()});})();</script>
 </body>
 </html>
